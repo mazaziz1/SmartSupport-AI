@@ -1,0 +1,23 @@
+.venv/
+__pycache__/
+*.pyc
+.DS_Store
+
+# Large trained model files
+models/transformer_fp32/
+models/transformer_tokenizer/
+models/*.pt
+models/*.joblib
+
+# Keep experiment results and metadata
+!models/results.csv
+!models/labels.json
+!models/classification_report.txt
+!models/oos_examples.json
+
+# Old backups and drafts
+README_backup.md
+*_original.py
+*_before_update.py
+*_DRAFT.*
+src/train_before_simplification.py

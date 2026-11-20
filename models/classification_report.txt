@@ -1,0 +1,66 @@
+                          precision    recall  f1-score   support
+
+             alarm_query       0.57      0.53      0.55        68
+            alarm_remove       0.36      0.45      0.40        42
+               alarm_set       0.55      0.87      0.67        82
+       audio_volume_down       0.59      0.73      0.65        22
+       audio_volume_mute       0.71      0.50      0.59        64
+      audio_volume_other       0.32      0.83      0.47        12
+         audio_volume_up       0.37      0.54      0.44        26
+          calendar_query       0.30      0.16      0.21       252
+         calendar_remove       0.51      0.66      0.58       134
+            calendar_set       0.88      0.44      0.58       418
+           cooking_query       0.00      0.00      0.00         0
+          cooking_recipe       0.68      0.44      0.54       144
+        datetime_convert       0.27      0.57      0.37        30
+          datetime_query       0.45      0.65      0.53       176
+        email_addcontact       0.23      0.79      0.36        24
+             email_query       0.73      0.67      0.70       238
+      email_querycontact       0.44      0.35      0.39        52
+         email_sendemail       0.78      0.65      0.71       228
+           general_greet       0.04      1.00      0.07         2
+            general_joke       0.38      0.68      0.49        38
+          general_quirky       0.36      0.15      0.21       338
+            iot_cleaning       0.56      0.77      0.65        52
+              iot_coffee       0.78      0.96      0.86        72
+     iot_hue_lightchange       0.58      0.61      0.59        72
+        iot_hue_lightdim       0.60      0.64      0.62        42
+        iot_hue_lightoff       0.82      0.74      0.78        86
+         iot_hue_lighton       0.09      0.50      0.15         6
+         iot_hue_lightup       0.53      0.52      0.52        54
+            iot_wemo_off       0.64      0.89      0.74        36
+             iot_wemo_on       0.16      0.65      0.26        20
+       lists_createoradd       0.46      0.81      0.59        78
+             lists_query       0.30      0.50      0.38       102
+            lists_remove       0.63      0.64      0.64       104
+       music_dislikeness       0.07      0.88      0.14         8
+          music_likeness       0.50      0.38      0.43        72
+             music_query       0.52      0.64      0.58        70
+          music_settings       0.07      0.17      0.10        12
+              news_query       0.73      0.58      0.65       248
+          play_audiobook       0.49      0.49      0.49        82
+               play_game       0.45      0.64      0.53        70
+              play_music       0.80      0.61      0.69       352
+           play_podcasts       0.91      0.74      0.82       126
+              play_radio       0.74      0.53      0.62       144
+             qa_currency       0.89      0.83      0.86        78
+           qa_definition       0.83      0.47      0.60       114
+              qa_factoid       0.58      0.17      0.27       282
+                qa_maths       0.36      0.70      0.47        50
+                qa_stock       0.53      0.75      0.62        52
+   recommendation_events       0.39      0.56      0.46        86
+recommendation_locations       0.30      0.52      0.38        62
+   recommendation_movies       0.33      0.62      0.43        40
+             social_post       0.89      0.57      0.70       162
+            social_query       0.21      0.50      0.29        50
+          takeaway_order       0.40      0.73      0.52        44
+          takeaway_query       0.43      0.54      0.48        70
+         transport_query       0.46      0.37      0.41       102
+          transport_taxi       0.49      0.91      0.64        46
+        transport_ticket       0.61      0.87      0.72        70
+       transport_traffic       0.42      0.93      0.58        30
+           weather_query       0.71      0.70      0.71       312
+
+                accuracy                           0.55      5948
+               macro avg       0.50      0.61      0.51      5948
+            weighted avg       0.61      0.55      0.55      5948
