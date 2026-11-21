@@ -125,7 +125,7 @@ https://huggingface.co/datasets/AmazonScience/massive
 
 The trained model files required to run SmartSupport AI are available here:
 
-**[Download SmartSupport AI Model Weights](https://drive.google.com/drive/folders/1TcwZARe6cLBpz3SEpYjUjGU8GWl4Klg3?usp=sharing)**
+[Download SmartSupport AI Model Weights](https://drive.google.com/drive/folders/1TcwZARe6cLBpz3SEpYjUjGU8GWl4Klg3?usp=sharing)
 
 The folder contains:
 - TF-IDF + Logistic Regression model (`baseline.joblib`)
