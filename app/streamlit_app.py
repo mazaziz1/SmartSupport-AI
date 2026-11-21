@@ -75,22 +75,32 @@ def load_artifacts():
 
     transformer_dir = MODELS / "transformer_fp32"
     tokenizer = AutoTokenizer.from_pretrained(MODELS / "transformer_tokenizer")
-    config = AutoConfig.from_pretrained(transformer_dir)
-    quantized_model = AutoModelForSequenceClassification.from_config(config)
-    quantized_model = torch.quantization.quantize_dynamic(
-        quantized_model, {nn.Linear}, dtype=torch.qint8
-    )
-    quantized_checkpoint = torch.load(
-        MODELS / "transformer_int8.pt", map_location="cpu", weights_only=False
-    )
-    quantized_model.load_state_dict(quantized_checkpoint["state_dict"])
-    quantized_model.eval()
 
     transformer = AutoModelForSequenceClassification.from_pretrained(
         transformer_dir
     ).eval()
 
-    return labels, baseline, neural_net, vocabulary, transformer, quantized_model, tokenizer
+    student_checkpoint = torch.load(
+        MODELS / "student_int8.pt", map_location="cpu", weights_only=False
+    )
+    student_vocabulary = student_checkpoint["vocab"]
+
+    quantized_model = AverageEmbeddingNet(
+        len(student_vocabulary) + 2,
+        student_checkpoint["embedding_dim"],
+        len(labels),
+    )
+    quantized_model = torch.quantization.quantize_dynamic(
+        quantized_model, {nn.Linear}, dtype=torch.qint8
+    )
+    quantized_model.load_state_dict(student_checkpoint["state_dict"])
+    quantized_model.eval()
+
+    return (
+        labels, baseline, neural_net, vocabulary, transformer,
+        quantized_model, student_vocabulary, tokenizer
+    )
+
 
 
 def timed_prediction(function):
@@ -126,7 +136,7 @@ required_files = [
     MODELS / "baseline.joblib",
     MODELS / "nn.pt",
     MODELS / "transformer_fp32" / "config.json",
-    MODELS / "transformer_int8.pt",
+    MODELS / "student_int8.pt",
     MODELS / "transformer_tokenizer",
 ]
 missing = [str(path.relative_to(ROOT)) for path in required_files if not path.exists()]
@@ -136,7 +146,7 @@ if missing:
     st.stop()
 
 try:
-    labels, baseline, neural_net, vocabulary, transformer, quantized_model, tokenizer = load_artifacts()
+    labels, baseline, neural_net, vocabulary, transformer, quantized_model, student_vocabulary, tokenizer = load_artifacts()
 except Exception as error:
     st.error("The trained models could not be loaded.")
     st.exception(error)
@@ -181,13 +191,19 @@ if st.button("Classify message", type="primary", disabled=not message.strip()):
             return transformer_prediction(transformer, tokenizer, normalized, labels)
 
         def quantized_predict():
-            return transformer_prediction(quantized_model, tokenizer, normalized, labels)
+            with torch.no_grad():
+                logits = quantized_model(
+                    encode_texts([normalized], student_vocabulary)
+                )
+                probabilities = torch.softmax(logits, dim=-1)[0]
+            index = int(probabilities.argmax())
+            return labels[index], float(probabilities[index])
 
         predictors = [
             ("TF-IDF + Logistic Regression", baseline_predict),
             ("Word2Vec + Feedforward NN", neural_predict),
             ("DistilBERT fine-tuned", transformer_predict),
-            ("DistilBERT INT8", quantized_predict),
+            ("Distilled Student INT8", quantized_predict),
         ]
 
         st.subheader("Four-model comparison")
@@ -214,7 +230,7 @@ if st.button("Classify message", type="primary", disabled=not message.strip()):
         st.subheader("Final routing decision")
         if intent == "ERROR" or confidence < threshold:
             st.warning(
-                "Route: Human Agent — the quantized model's confidence is below "
+                "Route: Human Agent — the distilled student's confidence is below "
                 "the selected threshold."
             )
         else:
@@ -222,7 +238,7 @@ if st.button("Classify message", type="primary", disabled=not message.strip()):
             st.write(f"Selected intent: `{intent}`")
 
         st.caption(
-            "The quantized INT8 Transformer controls the final routing decision. "
+            "The quantized distilled student controls the final routing decision. "
             "The confidence threshold is a prototype rule; out-of-scope performance "
             "must be interpreted using the separate evaluation set."
         )

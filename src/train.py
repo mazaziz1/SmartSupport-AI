@@ -176,6 +176,85 @@ def evaluate(name, predict_proba, test_texts, test_labels, oos_texts, artifact):
     }
 
 
+
+def train_distilled_student(train_df, labels, teacher, tokenizer):
+    """Train a smaller student using teacher probabilities and true labels."""
+    print("\\nTraining knowledge-distilled student model...")
+
+    sentences = [text.split() for text in train_df["text"]]
+    w2v = Word2Vec(
+        sentences, vector_size=64, window=5,
+        min_count=1, workers=2, epochs=5, seed=SEED
+    )
+    vocab = {word: i + 2 for i, word in enumerate(w2v.wv.index_to_key)}
+    vocab["<unk>"] = 1
+
+    student = AverageEmbeddingNet(len(vocab) + 2, 64, len(labels))
+    with torch.no_grad():
+        for word, index in vocab.items():
+            if word in w2v.wv:
+                student.embedding.weight[index].copy_(
+                    torch.tensor(w2v.wv[word])
+                )
+
+    texts = train_df["text"].tolist()
+    x = encode_texts(texts, vocab)
+    y = torch.tensor(train_df["label_id"].to_numpy(), dtype=torch.long)
+
+    teacher_probs = torch.tensor(
+        transformer_probabilities(teacher, tokenizer, texts),
+        dtype=torch.float32
+    )
+
+    loader = DataLoader(
+        torch.utils.data.TensorDataset(x, y, teacher_probs),
+        batch_size=64, shuffle=True
+    )
+
+    optimizer = torch.optim.Adam(student.parameters(), lr=0.003)
+    kl_loss = nn.KLDivLoss(reduction="batchmean")
+    temperature = 2.0
+
+    for epoch in range(10):
+        student.train()
+        for bx, by, teacher_batch in loader:
+            optimizer.zero_grad()
+            logits = student(bx)
+            soft_loss = kl_loss(
+                torch.log_softmax(logits / temperature, dim=1),
+                torch.softmax(
+                    torch.log(teacher_batch.clamp(min=1e-8)) / temperature,
+                    dim=1
+                )
+            ) * (temperature ** 2)
+            hard_loss = nn.CrossEntropyLoss()(logits, by)
+            loss = 0.7 * soft_loss + 0.3 * hard_loss
+            loss.backward()
+            optimizer.step()
+        print(f"Distillation epoch {epoch + 1}/10 complete")
+
+    student.eval()
+    quantized = torch.quantization.quantize_dynamic(
+        student, {nn.Linear}, dtype=torch.qint8
+    )
+    path = OUT / "student_int8.pt"
+    torch.save({
+        "state_dict": quantized.state_dict(),
+        "vocab": vocab,
+        "labels": labels,
+        "embedding_dim": 64
+    }, path)
+
+    def probabilities(texts):
+        with torch.no_grad():
+            logits = quantized(
+                encode_texts([normalize_text(t) for t in texts], vocab)
+            )
+            return torch.softmax(logits, dim=-1).numpy()
+
+    return probabilities, path
+
+
 def main():
     print("Loading MASSIVE English + Turkish dataset...")
     train_df, validation_df, test_df = map(clean, load_massive())
@@ -248,20 +327,15 @@ def main():
                             transformer_probs, test_texts, test_labels,
                             oos_texts, transformer_dir))
 
-    print("\n[4/4] Dynamic INT8 quantization")
-    quantized = torch.quantization.quantize_dynamic(
-        transformer, {nn.Linear}, dtype=torch.qint8)
-    quantized.eval()
-    quant_path = OUT / "transformer_int8.pt"
-    torch.save({"state_dict": quantized.state_dict(),
-                "config": transformer.config.to_dict(), "labels": labels}, quant_path)
+    print("\n[4/4] Knowledge distillation + INT8 student quantization")
+    student_probs, student_path = train_distilled_student(
+        train_df, labels, transformer, tokenizer
+    )
     tokenizer.save_pretrained(OUT / "transformer_tokenizer")
-
-    def quantized_probs(texts):
-        return transformer_probabilities(quantized, tokenizer, texts)
-    results.append(evaluate("Multilingual DistilBERT INT8", quantized_probs,
-                            test_texts, test_labels, oos_texts, quant_path))
-
+    results.append(evaluate(
+        "Distilled Word2Vec Student INT8", student_probs,
+        test_texts, test_labels, oos_texts, student_path
+    ))
     result_df = pd.DataFrame(results)
     result_df.to_csv(OUT / "results.csv", index=False)
     base_predictions = baseline_probs(test_texts).argmax(axis=1)
