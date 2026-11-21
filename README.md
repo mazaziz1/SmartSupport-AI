@@ -76,29 +76,26 @@ Model-size values are available in `models/results.csv`. Check the size-measurem
 
 ## 7. Repository structure
 
-```text
-app/
-    streamlit_app.py
-src/
-    data.py
-    data_original.py
-    text_utils.py
-    train.py
-    train_original.py
-    train_before_simplification.py
-models/
-    baseline.joblib
-    nn.pt
-    labels.json
-    results.csv
-    classification_report.txt
-    oos_examples.json
-    transformer_fp32/
-    transformer_tokenizer/
-    transformer_int8.pt
-requirements.txt
-README.md
-```
+SmartSupport-AI/
+├── app/
+│   └── streamlit_app.py
+├── docs/
+│   ├── demo_script.md
+│   └── submission_checklist.md
+├── models/
+│   ├── classification_report.txt
+│   ├── labels.json
+│   ├── oos_examples.json
+│   └── results.csv
+├── src/
+│   ├── __init__.py
+│   ├── data.py
+│   ├── text_utils.py
+│   └── train.py
+├── .gitignore
+├── make_slides.py
+├── requirements.txt
+└── README.md
 
 Generated model artifacts are stored locally in `models/`. Large model weights should not be committed to a public Git repository. If sharing the repository without these files, provide instructions for generating or downloading them.
 
