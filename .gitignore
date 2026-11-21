@@ -21,3 +21,7 @@ README_backup.md
 *_before_update.py
 *_DRAFT.*
 src/train_before_simplification.py
+
+# Local backups
+src/train_before_distillation.py
+app/streamlit_app_before_distillation.py
