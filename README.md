@@ -120,3 +120,18 @@ ChatGPT was used to assist with drafting and debugging parts of the project code
 Amazon Science. *MASSIVE: A 1 Million-Example Multilingual Natural Language Understanding Dataset with 51 Languages.*
 
 https://huggingface.co/datasets/AmazonScience/massive
+
+## Trained Model Weights
+
+The trained model files required to run SmartSupport AI are available here:
+
+**[Download SmartSupport AI Model Weights](https://drive.google.com/drive/folders/1TcwZARe6cLBpz3SEpYjUjGU8GWl4Klg3?usp=sharing)**
+
+The folder contains:
+- TF-IDF + Logistic Regression model (`baseline.joblib`)
+- Word2Vec + Feedforward Neural Network (`nn.pt`)
+- Fine-tuned multilingual DistilBERT model (`transformer_fp32/`)
+- Quantized INT8 model (`transformer_int8.pt`)
+- Transformer tokenizer (`transformer_tokenizer/`)
+
+Download the model files and place them in the project's `models/` directory before running the application.
